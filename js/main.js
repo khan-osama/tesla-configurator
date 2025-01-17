@@ -6,6 +6,10 @@ const interiorImage = document.querySelector('#interior-img');
 const wheelButtonsSection = document.querySelector('#wheel-buttons');
 const performanceBtn = document.querySelector('#performance-btn');
 const totalPriceElement = document.querySelector('#total-price');
+const fullSelfDrivingCheckbox = document.querySelector('#full-self-driving-checkbox');
+const accessoryCheckboxes = document.querySelectorAll('.accessory-form-checkbox');
+const downPaymentElement = document.querySelector('#down-payment');
+const monthlyPaymentElement = document.querySelector('#monthly-payment');
 
 const basePrice = 52490;
 let currentPrice = basePrice;
@@ -37,8 +41,50 @@ const updateTotalPrice = () => {
         currentPrice += pricing['Performance Wheels'];
     }
 
+    if (selectedOptions['Performance Package']) {
+        currentPrice += pricing['Performance Package'];
+    }
+
+    if (selectedOptions['Full Self-Driving']) {
+        currentPrice += pricing['Full Self-Driving'];
+    }
+
+    //Accessory Checkboxes
+    accessoryCheckboxes.forEach((checkbox) => {
+        //Extract each label from each accessory
+        const accessoryLabel = checkbox.closest('label').querySelector('span').textContent.trim();
+        const accessoryPrice = pricing['Accessories'][accessoryLabel];
+
+        // Add to current price if accessory if selected
+        if (checkbox.checked) {
+            currentPrice += accessoryPrice;
+        }
+
+    })
+
     // Update Total Price in UI
     totalPriceElement.textContent = `$${currentPrice.toLocaleString()}`;
+
+    updatePaymentBreakdown();
+}
+
+// Update Payment Breakdown Based on Current Price
+const updatePaymentBreakdown = () => {
+    // Calculate Down Payment
+    const downPayment = currentPrice * 0.1;
+    downPaymentElement.textContent = `$${downPayment.toLocaleString()}`;
+
+    // Calculate Loan Details (Assuming 60-Month Loan & 3% Interest Rate)
+    const loanMonths = 60;
+    const interestRate = 0.03;
+    const loanAmount = currentPrice - downPayment;
+
+    // Monthly Payment Formula
+    const monthlyInterestRate = interestRate / 12;
+    const monthlyPayment = (loanAmount * (monthlyInterestRate * Math.pow(1 + monthlyInterestRate, loanMonths))) / (Math.pow(1 + monthlyInterestRate, loanMonths) - 1);
+
+    monthlyPaymentElement.textContent = `$${monthlyPayment.toFixed(2).toLocaleString()}`;
+
 }
 
 
@@ -120,9 +166,25 @@ const handleWheelButtonClick = (event) => {
 
 // Performance Package Selection
 const handlePerformanceBtnClick = () => {
-    performanceBtn.classList.toggle('bg-gray-700');
+   const isSelected =  performanceBtn.classList.toggle('bg-gray-700');
     performanceBtn.classList.toggle('text-white');
+
+    //Update selected options
+    selectedOptions['Performance Package'] = isSelected;
+
+    updateTotalPrice();
 }
+
+// Full Self Driving Selection
+const fullSelfDrivingChange = () => {
+    const isSelected = fullSelfDrivingCheckbox.checked;
+    selectedOptions['Full Self-Driving'] = isSelected;
+
+    updateTotalPrice();
+}
+
+// Initial Update Price
+updateTotalPrice();
 
 // Event Listeners
 window.addEventListener('scroll', () => requestAnimationFrame(handleScroll));
@@ -130,3 +192,5 @@ exteriorColorSection.addEventListener('click', handleColorButtonClick);
 interiorColorSection.addEventListener('click', handleColorButtonClick);
 wheelButtonsSection.addEventListener('click', handleWheelButtonClick);
 performanceBtn.addEventListener('click', handlePerformanceBtnClick);
+fullSelfDrivingCheckbox.addEventListener('change', fullSelfDrivingChange);
+accessoryCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', () => updateTotalPrice()));
